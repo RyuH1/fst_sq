@@ -2,7 +2,7 @@ specVersion: 0.2.0
 name: finitestate
 version: 0.0.4
 description: This SubQuery project can be use as a st...
-repository: https://github.com/subquery/contextfree-subql-starter
+repository: https://github.com/RyuH1/fst_sq
 schema:
   file: ./schema.graphql
 network:
