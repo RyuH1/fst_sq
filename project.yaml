@@ -1,0 +1,33 @@
+specVersion: 0.2.0
+name: finitestate
+version: 0.0.4
+description: This SubQuery project can be use as a st...
+repository: https://github.com/subquery/contextfree-subql-starter
+schema:
+  file: ./schema.graphql
+network:
+  endpoint: wss://fs-api.ata.network
+  genesisHash: '0x19757b969097d71a154bb26493078f179a8dec1dd9c75bd9d4586d38c659064e'
+  chaintypes:
+    file: ./dist/chaintypes.js
+dataSources:
+  - kind: substrate/Runtime
+    startBlock: 1897806
+    mapping:
+      file: ./dist/index.js
+      handlers:
+        # - handler: handleCall
+        #   kind: substrate/CallHandler
+        # - handler: handleBlock
+        #   kind: substrate/BlockHandler
+        # - handler: handleProposalCreated
+        #   kind: substrate/EventHandler
+        #   filter:
+        #     module: daoPortal
+        #     method: ProposalCreated
+        - handler: handleProposal
+          kind: substrate/CallHandler
+          filter:
+            module: daoPortal
+            method: addProposal
+            success: true

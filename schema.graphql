@@ -1,0 +1,12 @@
+type Proposal @entity {
+
+  id: ID! #id is a required field
+
+  project: Int! @index(unique: false)
+
+  proposal: Int!
+
+  start: BigInt! @index(unique: false)
+
+  end: BigInt! @index(unique: false)
+}

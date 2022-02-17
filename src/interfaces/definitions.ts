@@ -1,0 +1,1 @@
+export { default as daoPortal } from './daoPortal/definitions';
