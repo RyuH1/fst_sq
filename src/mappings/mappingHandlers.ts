@@ -1,7 +1,7 @@
 import {SubstrateExtrinsic,SubstrateEvent,SubstrateBlock} from "@subql/types";
 import {Proposal} from "../types";
 // import {StarterEntity} from "../types";
-import { ProjectId, ProposalId, DAOProposal } from "../interfaces/daoportal/types"
+import { ProjectId, ProposalId, DAOProposal } from "../interfaces/daoPortal/types"
 
 export async function handleBlock(block: SubstrateBlock): Promise<void> {
     // //Create a new starterEntity with ID using block hash
@@ -47,7 +47,7 @@ export async function handleProposal(extrinsic: SubstrateExtrinsic): Promise<voi
     const proposalId = proposal_id as ProposalId;
 
     let record = new Proposal(`${projectId}-${proposalId}`);
-    
+
     record.project = projectId.toNumber();
     record.proposal = proposalId.toNumber();
 
