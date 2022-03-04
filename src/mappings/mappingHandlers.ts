@@ -3,32 +3,32 @@ import {Proposal} from "../types";
 // import {StarterEntity} from "../types";
 import { ProjectId, ProposalId, DAOProposal } from "../interfaces/daoPortal/types"
 
-export async function handleBlock(block: SubstrateBlock): Promise<void> {
-    // //Create a new starterEntity with ID using block hash
-    // let record = new StarterEntity(block.block.header.hash.toString());
-    // //Record block number
-    // record.field1 = block.block.header.number.toNumber();
-    // await record.save();
-    logger.into(`new block: ${block.block.header.hash.toString()}`)
-}
+// export async function handleBlock(block: SubstrateBlock): Promise<void> {
+//     // //Create a new starterEntity with ID using block hash
+//     // let record = new StarterEntity(block.block.header.hash.toString());
+//     // //Record block number
+//     // record.field1 = block.block.header.number.toNumber();
+//     // await record.save();
+//     logger.into(`new block: ${block.block.header.hash.toString()}`)
+// }
 
-export async function handleProposalCreated(event: SubstrateEvent): Promise<void> {
-    const {event: {data: [project_id, proposal_id]}} = event;
-    const projectId = project_id as ProjectId;
-    const proposalId = proposal_id as ProposalId;
+// export async function handleProposalCreated(event: SubstrateEvent): Promise<void> {
+//     const {event: {data: [project_id, proposal_id]}} = event;
+//     const projectId = project_id as ProjectId;
+//     const proposalId = proposal_id as ProposalId;
 
-    //Retrieve the record by its ID
-    let record = new Proposal(`${projectId.toNumber()}-${proposalId.toNumber()}`);
-    record.project = projectId.toNumber();
+//     //Retrieve the record by its ID
+//     let record = new Proposal(`${projectId.toNumber()}-${proposalId.toNumber()}`);
+//     record.project = projectId.toNumber();
 
-    logger.info(`Proposal: ${projectId.toNumber()}-${proposalId.toNumber()}`)
-    // console.log(`Proposal: ${projectId.toNumber()}-${proposalId.toNumber()}`);
+//     logger.info(`Proposal: ${projectId.toNumber()}-${proposalId.toNumber()}`)
+//     // console.log(`Proposal: ${projectId.toNumber()}-${proposalId.toNumber()}`);
 
-    // record.field2 = account.toString();
-    // //Big integer type Balance of a transfer event
-    // record.field3 = (balance as Balance).toBigInt();
-    await record.save();
-}
+//     // record.field2 = account.toString();
+//     // //Big integer type Balance of a transfer event
+//     // record.field3 = (balance as Balance).toBigInt();
+//     await record.save();
+// }
 
 // export async function handleCall(extrinsic: SubstrateExtrinsic): Promise<void> {
 //     const record = await StarterEntity.get(extrinsic.block.block.header.hash.toString());
