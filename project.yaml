@@ -12,25 +12,9 @@ network:
     file: ./dist/chaintypes.js
 dataSources:
   - kind: substrate/Runtime
-    startBlock: 1697806
+    startBlock: 1
     mapping:
       file: './dist/index.js'
       handlers:
-        - handler: handleAddProposal
-          kind: substrate/CallHandler
-          filter:
-            module: daoPortal
-            method: addProposal
-            success: true
-        - handler: handleAddProject
-          kind: substrate/CallHandler
-          filter:
-            module: daoPortal
-            method: addProject
-            success: true
-        - handler: handleUpdateProject
-          kind: substrate/CallHandler
-          filter:
-            module: daoPortal
-            method: updateProject
-            success: true
+        - handler: handleBlock
+          kind: substrate/BlockHandler

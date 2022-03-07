@@ -1,98 +1,79 @@
-import {SubstrateExtrinsic} from "@subql/types";
-import {Proposal, Project, CrossChainAccount, Protocol, Privacy, ProposalStatus} from "../types";
-import { ProjectId, ProposalId, DAOProposal, Project as DAOProject, CrossChainAccount as DAOCrossChainAccount } from "../interfaces/daoPortal/types"
+import { EventRecord } from "@polkadot/types/interfaces";
+import { SubstrateExtrinsic, SubstrateBlock } from "@subql/types";
+import { SpecVersion, Event, Extrinsic } from "../types";
 
-async function ensureCrossChainAccount(account: DAOCrossChainAccount): Promise<void> {
-    const record = await CrossChainAccount.get(account.inner.toString());
-    if (!account) {
-        let record = new CrossChainAccount(account.inner.toString());
+let specVersion: SpecVersion;
+export async function handleBlock(block: SubstrateBlock): Promise<void> {
+  // Initialise Spec Version
+  if (!specVersion) {
+    specVersion = await SpecVersion.get(block.specVersion.toString());
+  }
 
-        record.protocol = account.type as Protocol;
+  // Check for updates to Spec Version
+  if (!specVersion || specVersion.id !== block.specVersion.toString()) {
+    specVersion = new SpecVersion(block.specVersion.toString());
+    specVersion.blockHeight = block.block.header.number.toBigInt();
+    await specVersion.save();
+  }
 
-        await record.save();
-    }
+  // Process all events in block
+  const events = block.events
+    .filter(
+      (evt) =>
+        evt.event.section !== "system" &&
+        evt.event.method !== "ExtrinsicSuccess"
+    )
+    .map((evt, idx) =>
+      handleEvent(block.block.header.number.toString(), idx, evt)
+    );
+
+  // Process all calls in block
+  const calls = wrapExtrinsics(block).map((ext, idx) =>
+    handleCall(`${block.block.header.number.toString()}-${idx}`, ext)
+  );
+
+  // Save all data
+  await Promise.all([
+    store.bulkCreate("Event", events),
+    store.bulkCreate("Extrinsic", calls),
+  ]);
 }
 
-export async function handleAddProposal(extrinsic: SubstrateExtrinsic): Promise<void> {
-    const addEvent = extrinsic.events.find(e => e.event.section === 'daoPortal' && e.event.method === 'ProposalCreated');
-    const {event: {data: [project_id, proposal_id]}} = addEvent;
-    const projectId = project_id as ProjectId;
-    const proposalId = proposal_id as ProposalId;
-
-    let record = new Proposal(`${projectId}-${proposalId}`);
-
-    record.projectId = projectId.toString();
-    record.proposal = proposalId.toNumber();
-
-    const {extrinsic: {method: {args: [, proposal]}}} = extrinsic;
-
-    const daoProposal = proposal as DAOProposal;
-    logger.info(`Create Proposal (project: ${projectId}, id: ${proposalId}):\n ${daoProposal}`);
-
-    /// populating record
-    record.start = daoProposal._start.toBigInt();
-    record.end = daoProposal._end.toBigInt();
-
-    await ensureCrossChainAccount(daoProposal._author);
-    record.authorId = daoProposal._author.inner.toString();
-
-    record.privacy = daoProposal._privacy.type as Privacy;
-
-    if (daoProposal._frequency.isSome) {
-        record.frequency = daoProposal._frequency.unwrap().toBigInt();
-    }
-
-    record.status = daoProposal.state.status.type as ProposalStatus;
-
-    for (const vote of daoProposal.state.votes) {
-        record.votes.push(vote.toBigInt());
-    }
-
-    if (daoProposal.state.pub_voters.isSome) {
-        record.pubvote = daoProposal.state.pub_voters.unwrap().toString();
-    }
-
-    record.data = daoProposal._data.toString();
-
-    record.created = extrinsic.block.block.header.number.toNumber();
-
-    await record.save();
+function handleEvent(
+  blockNumber: string,
+  eventIdx: number,
+  event: EventRecord
+): Event {
+  const newEvent = new Event(`${blockNumber}-${eventIdx}`);
+  newEvent.blockHeight = BigInt(blockNumber);
+  newEvent.module = event.event.section;
+  newEvent.event = event.event.method;
+  return newEvent;
 }
 
-export async function handleAddProject(extrinsic: SubstrateExtrinsic): Promise<void> {
-    const addEvent = extrinsic.events.find(e => e.event.section === 'daoPortal' && e.event.method === 'ProjectCreated');
-    const {event: {data: [project_id]}} = addEvent;
-    const projectId = project_id as ProjectId;
-
-    let record = new Project(`${projectId}`);
-
-    const {extrinsic: {method: {args: [project]}}} = extrinsic;
-    const daoProject = project as DAOProject;
-
-    logger.info(`Create Project (id: ${projectId}):\n ${daoProject}`);
-    
-    await ensureCrossChainAccount(daoProject.owner);
-    record.ownerId = daoProject.owner.inner.toString();
-    record.data = daoProject.data.toString();
-    record.updated = extrinsic.block.block.header.number.toNumber();
-
-    await record.save();
+function handleCall(idx: string, extrinsic: SubstrateExtrinsic): Extrinsic {
+  const newExtrinsic = new Extrinsic(idx);
+  newExtrinsic.txHash = extrinsic.extrinsic.hash.toString();
+  newExtrinsic.module = extrinsic.extrinsic.method.section;
+  newExtrinsic.call = extrinsic.extrinsic.method.method;
+  newExtrinsic.blockHeight = extrinsic.block.block.header.number.toBigInt();
+  newExtrinsic.success = extrinsic.success;
+  newExtrinsic.isSigned = extrinsic.extrinsic.isSigned;
+  return newExtrinsic;
 }
 
-export async function handleUpdateProject(extrinsic: SubstrateExtrinsic): Promise<void> {
-    const {extrinsic: {method: {args: [project_id, project]}}} = extrinsic;
-    
-    const projectId = project_id as ProjectId;
-    const record = await Project.get(`${projectId}`);
-    
-    const daoProject = project as DAOProject;
-
-    logger.info(`Update Project (id: ${projectId}):\n ${daoProject}`);
-    
-    await ensureCrossChainAccount(daoProject.owner);
-    record.ownerId = daoProject.owner.inner.toString();
-    record.data = daoProject.data.toString();
-    record.updated = extrinsic.block.block.header.number.toNumber();
-
-    await record.save();
+function wrapExtrinsics(wrappedBlock: SubstrateBlock): SubstrateExtrinsic[] {
+  return wrappedBlock.block.extrinsics.map((extrinsic, idx) => {
+    const events = wrappedBlock.events.filter(
+      ({ phase }) => phase.isApplyExtrinsic && phase.asApplyExtrinsic.eqn(idx)
+    );
+    return {
+      idx,
+      extrinsic,
+      block: wrappedBlock,
+      events,
+      success:
+        events.findIndex((evt) => evt.event.method === "ExtrinsicSuccess") > -1,
+    };
+  });
 }

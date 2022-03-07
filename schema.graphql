@@ -1,61 +1,21 @@
-type Proposal @entity {
-
-  id: ID! #id is a required field
-
-  project: Project! @index(unique: false)
-
-  proposal: Int!
-
-  start: BigInt! @index(unique: false)
-
-  end: BigInt! @index(unique: false)
-
-  author: CrossChainAccount!
-
-  privacy: Privacy!
-
-  frequency: BigInt
-
-  status: ProposalStatus!
-
-  votes: [BigInt]!
-
-  pubvote: String
-
-  data: String!
-
-  created: Int!
+type SpecVersion @entity {
+  id: ID! #specVersion
+  blockHeight: BigInt!
 }
 
-enum Privacy {
-  Opaque
-  Private
-  Public
-  Mixed
-}
-
-enum ProposalStatus {
-  Pending
-  Ongoing
-  Closed
-}
-
-enum Protocol {
-  Substrate
-  Solidity
-}
-
-type CrossChainAccount @entity {
+type Event @entity {
   id: ID!
-  protocol: Protocol!
+  module: String! @index
+  event: String! @index
+  blockHeight: BigInt! @index
 }
 
-type Project @entity {
+type Extrinsic @entity {
   id: ID!
-
-  owner: CrossChainAccount!
-
-  data: String!
-
-  updated: Int!
+  txHash: String! @index
+  module: String! @index
+  call: String! @index
+  blockHeight: BigInt! @index
+  success: Boolean!
+  isSigned: Boolean!
 }
