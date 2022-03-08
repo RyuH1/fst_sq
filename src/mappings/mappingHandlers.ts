@@ -4,7 +4,7 @@ import { ProjectId, ProposalId, DAOProposal, Project as DAOProject, CrossChainAc
 
 async function ensureCrossChainAccount(account: DAOCrossChainAccount): Promise<void> {
     const record = await CrossChainAccount.get(account.inner.toString());
-    if (!account) {
+    if (!record) {
         let record = new CrossChainAccount(account.inner.toString());
 
         record.protocol = account.type as Protocol;
@@ -43,6 +43,8 @@ export async function handleAddProposal(extrinsic: SubstrateExtrinsic): Promise<
     }
 
     record.status = daoProposal.state.status.type as ProposalStatus;
+
+    record.votes = [];
 
     for (const vote of daoProposal.state.votes) {
         record.votes.push(vote.toBigInt());
