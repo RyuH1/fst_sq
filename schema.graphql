@@ -2,11 +2,60 @@ type Proposal @entity {
 
   id: ID! #id is a required field
 
-  project: Int! @index(unique: false)
+  project: Project! @index(unique: false)
 
   proposal: Int!
 
   start: BigInt! @index(unique: false)
 
   end: BigInt! @index(unique: false)
+
+  author: CrossChainAccount!
+
+  privacy: Privacy!
+
+  frequency: BigInt
+
+  status: ProposalStatus!
+
+  votes: [BigInt]!
+
+  pubvote: String
+
+  data: String!
+
+  created: Int!
+}
+
+enum Privacy {
+  Opaque
+  Private
+  Public
+  Mixed
+}
+
+enum ProposalStatus {
+  Pending
+  Ongoing
+  Closed
+}
+
+enum Protocol {
+  Substrate
+  Solidity
+}
+
+type CrossChainAccount @entity {
+  id: ID!
+  protocol: Protocol!
+}
+
+type Project @entity {
+  id: ID!
+
+  owner: CrossChainAccount!
+
+  data: String!
+
+  updated: Int!
 }
