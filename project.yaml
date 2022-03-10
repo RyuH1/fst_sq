@@ -35,3 +35,10 @@ dataSources:
             module: daoPortal
             method: updateProject
             success: true
+        - handler: handleCleanData
+          kind: substrate/CallHandler
+          filter:
+            module: daoPortal
+            method: cleanData
+            success: true
+        

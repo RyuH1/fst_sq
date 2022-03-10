@@ -98,3 +98,15 @@ export async function handleUpdateProject(extrinsic: SubstrateExtrinsic): Promis
 
     await record.save();
 }
+
+export async function handleCleanData(_extrinsic: SubstrateExtrinsic): Promise<void> {
+    let len_proj = Project.length;
+    for (let i = 1; i <= len_proj; i++) {
+        let ps:Proposal[] = await Proposal.getByProjectId(`${i}`);
+        let len_prop = ps.length;
+        for (let j = 0; j < len_prop; j++) {
+            await Proposal.remove(ps.at(j).id);
+        }
+        await Project.remove(`${i}`);
+    }
+}
