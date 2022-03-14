@@ -1,6 +1,6 @@
 import {SubstrateExtrinsic} from "@subql/types";
 import {Proposal, Project, CrossChainAccount, Protocol, Privacy, ProposalStatus} from "../types";
-import { ProjectId, ProposalId, DAOProposal, Project as DAOProject, CrossChainAccount as DAOCrossChainAccount } from "../interfaces/daoPortal/types"
+import { ProjectId, ProposalId, DAOProposal, Project as DAOProject, CrossChainAccount as DAOCrossChainAccount, VoteUpdate } from "../interfaces/daoPortal/types"
 
 async function ensureCrossChainAccount(account: DAOCrossChainAccount): Promise<void> {
     const record = await CrossChainAccount.get(account.inner.toString());
@@ -27,7 +27,7 @@ export async function handleAddProposal(extrinsic: SubstrateExtrinsic): Promise<
     const {extrinsic: {method: {args: [, proposal]}}} = extrinsic;
 
     const daoProposal = proposal as DAOProposal;
-    logger.info(`Create Proposal (project: ${projectId}, id: ${proposalId}):\n ${daoProposal}`);
+    logger.info(`(${extrinsic.block.block.header.number.toNumber()}) Create Proposal (project: ${projectId}, id: ${proposalId}):\n ${daoProposal}`);
 
     /// populating record
     record.start = daoProposal._start.toBigInt();
@@ -57,6 +57,7 @@ export async function handleAddProposal(extrinsic: SubstrateExtrinsic): Promise<
     record.data = daoProposal._data.toString();
 
     record.created = extrinsic.block.block.header.number.toNumber();
+    record.updated = extrinsic.block.block.header.number.toNumber();
 
     await record.save();
 }
@@ -71,7 +72,7 @@ export async function handleAddProject(extrinsic: SubstrateExtrinsic): Promise<v
     const {extrinsic: {method: {args: [project]}}} = extrinsic;
     const daoProject = project as DAOProject;
 
-    logger.info(`Create Project (id: ${projectId}):\n ${daoProject}`);
+    logger.info(`(${extrinsic.block.block.header.number.toNumber()}) Create Project (id: ${projectId}):\n ${daoProject}`);
     
     await ensureCrossChainAccount(daoProject.owner);
     record.ownerId = daoProject.owner.inner.toString();
@@ -89,7 +90,7 @@ export async function handleUpdateProject(extrinsic: SubstrateExtrinsic): Promis
     
     const daoProject = project as DAOProject;
 
-    logger.info(`Update Project (id: ${projectId}):\n ${daoProject}`);
+    logger.info(`(${extrinsic.block.block.header.number.toNumber()}) Update Project (id: ${projectId}):\n ${daoProject}`);
     
     await ensureCrossChainAccount(daoProject.owner);
     record.ownerId = daoProject.owner.inner.toString();
@@ -99,14 +100,34 @@ export async function handleUpdateProject(extrinsic: SubstrateExtrinsic): Promis
     await record.save();
 }
 
-export async function handleCleanData(_extrinsic: SubstrateExtrinsic): Promise<void> {
-    let len_proj = Project.length;
-    for (let i = 1; i <= len_proj; i++) {
-        let ps:Proposal[] = await Proposal.getByProjectId(`${i}`);
-        let len_prop = ps.length;
-        for (let j = 0; j < len_prop; j++) {
-            await Proposal.remove(ps.at(j).id);
-        }
-        await Project.remove(`${i}`);
+export async function handleUpdateVote(extrinsic: SubstrateExtrinsic): Promise<void> {
+    const {extrinsic: {method: {args: [update]}}} = extrinsic;
+
+    const vote = update as VoteUpdate;
+
+    logger.info(`(${extrinsic.block.block.header.number.toNumber()}) Update Vote (project: ${vote.project}, proposal: ${vote.proposal}):\n ${vote}`);
+
+    const record = await Proposal.get(`${vote.project}-${vote.proposal}`);
+
+    record.votes = [];
+
+    for (const power of vote.votes) {
+        record.votes.push(power.toBigInt());
     }
+
+    if (vote.pub_voters.isSome) {
+        record.pubvote = vote.pub_voters.unwrap.toString();
+    }
+
+    const timestamp = extrinsic.block.timestamp;
+
+    if (timestamp.getTime() >= record.end) {
+        record.status = ProposalStatus.Closed;
+    } else {
+        record.status = ProposalStatus.Ongoing;
+    }
+
+    record.updated = extrinsic.block.block.header.number.toNumber();
+
+    await record.save();
 }

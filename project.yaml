@@ -35,3 +35,9 @@ dataSources:
             module: daoPortal
             method: updateProject
             success: true
+        - handler: handleUpdateVote
+          kind: substrate/CallHandler
+          filter:
+            module: daoPortal
+            method: updateVote
+            success: true
