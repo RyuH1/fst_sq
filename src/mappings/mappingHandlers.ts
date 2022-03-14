@@ -47,7 +47,7 @@ export async function handleAddProposal(extrinsic: SubstrateExtrinsic): Promise<
     record.votes = [];
 
     for (const vote of daoProposal.state.votes) {
-        record.votes.push(vote.toBigInt());
+        record.votes.push(vote.toHex());
     }
 
     if (daoProposal.state.pub_voters.isSome) {
@@ -112,7 +112,7 @@ export async function handleUpdateVote(extrinsic: SubstrateExtrinsic): Promise<v
     record.votes = [];
 
     for (const power of vote.votes) {
-        record.votes.push(power.toBigInt());
+        record.votes.push(power.toHex());
     }
 
     if (vote.pub_voters.isSome) {
