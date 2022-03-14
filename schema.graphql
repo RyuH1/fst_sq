@@ -18,7 +18,7 @@ type Proposal @entity {
 
   status: ProposalStatus!
 
-  votes: [BigInt]!
+  votes: [String]!
 
   pubvote: String
 
