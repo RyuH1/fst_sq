@@ -25,6 +25,8 @@ type Proposal @entity {
   data: String!
 
   created: Int!
+
+  updated: Int!
 }
 
 enum Privacy {
