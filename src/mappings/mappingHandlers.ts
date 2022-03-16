@@ -1,5 +1,5 @@
 import {SubstrateExtrinsic} from "@subql/types";
-import {Proposal, Project, CrossChainAccount, Protocol, Privacy, ProposalStatus} from "../types";
+import {Proposal, Project, CrossChainAccount, Protocol, Privacy, ProposalStatus, VotingFormat} from "../types";
 import { ProjectId, ProposalId, DAOProposal, Project as DAOProject, CrossChainAccount as DAOCrossChainAccount, VoteUpdate } from "../interfaces/daoPortal/types"
 
 async function ensureCrossChainAccount(account: DAOCrossChainAccount): Promise<void> {
@@ -37,6 +37,10 @@ export async function handleAddProposal(extrinsic: SubstrateExtrinsic): Promise<
     record.authorId = daoProposal._author.inner.toString();
 
     record.privacy = daoProposal._privacy.type as Privacy;
+
+    record.format = daoProposal._voting_format.type as VotingFormat;
+
+    record.optioncount = daoProposal._option_count.toNumber();
 
     if (daoProposal._frequency.isSome) {
         record.frequency = daoProposal._frequency.unwrap().toBigInt();
