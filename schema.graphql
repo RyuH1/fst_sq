@@ -14,6 +14,10 @@ type Proposal @entity {
 
   privacy: Privacy!
 
+  format: VotingFormat!
+
+  optioncount: Int!
+
   frequency: BigInt
 
   status: ProposalStatus!
@@ -34,6 +38,10 @@ enum Privacy {
   Private
   Public
   Mixed
+}
+
+enum VotingFormat {
+  SingleChoice
 }
 
 enum ProposalStatus {
