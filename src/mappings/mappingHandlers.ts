@@ -1,6 +1,15 @@
 import {SubstrateExtrinsic} from "@subql/types";
 import {Proposal, Project, CrossChainAccount, Protocol, Privacy, ProposalStatus, VotingFormat} from "../types";
 import { ProjectId, ProposalId, DAOProposal, Project as DAOProject, CrossChainAccount as DAOCrossChainAccount, VoteUpdate } from "../interfaces/daoPortal/types"
+import fetch from "cross-fetch";
+
+const IPFS_PIN_URL = "https://anydao.mypinata.cloud/ipfs";
+
+type ProposalData = {
+    _title: string
+    _description: string
+    _options: string[]
+  }
 
 async function ensureCrossChainAccount(account: DAOCrossChainAccount): Promise<void> {
     const record = await CrossChainAccount.get(account.inner.toString());
@@ -58,7 +67,28 @@ export async function handleAddProposal(extrinsic: SubstrateExtrinsic): Promise<
         record.pubvote = daoProposal.state.pub_voters.unwrap().toString();
     }
 
-    record.data = daoProposal._data.toString();
+    const data = daoProposal._data.toString();
+
+    record.data = data;
+
+    let detail = await fetch(`${IPFS_PIN_URL}/${data}`);
+    let pdata = (await detail.json()) as ProposalData;
+    // let proj = await json;
+
+
+    logger.info(`details: ${pdata._title}\n${pdata._description}\n${pdata._options}`);
+
+    // fetch(`${IPFS_PIN_URL}/${data}`).then(res => {
+    //     if (res.status >= 400) {
+    //       throw new Error("Bad response from server");
+    //     }
+    //     return res.json();
+    //   }).then((res: ProposalData) => {
+    //     logger.info(`res: ${res}`);
+    //   })
+    //   .catch(err => {
+    //     logger.err(err);
+    //   });
 
     record.created = extrinsic.block.block.header.number.toNumber();
     record.updated = extrinsic.block.block.header.number.toNumber();
