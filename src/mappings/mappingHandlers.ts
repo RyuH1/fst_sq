@@ -64,7 +64,7 @@ export async function handleAddProposal(extrinsic: SubstrateExtrinsic): Promise<
     }
 
     if (daoProposal.state.pub_voters.isSome) {
-        record.pubvote = daoProposal.state.pub_voters.unwrap().toString();
+        record.pubvote = daoProposal.state.pub_voters.unwrapOrDefault().toString();
     }
 
     logger.info(`proposal: ${daoProposal}`)
@@ -156,7 +156,7 @@ export async function handleUpdateVote(extrinsic: SubstrateExtrinsic): Promise<v
     }
 
     if (vote.pub_voters.isSome) {
-        record.pubvote = vote.pub_voters.unwrap.toString();
+        record.pubvote = vote.pub_voters.unwrapOrDefault().toString();
     }
 
     const timestamp = extrinsic.block.timestamp;
