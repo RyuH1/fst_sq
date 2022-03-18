@@ -67,16 +67,22 @@ export async function handleAddProposal(extrinsic: SubstrateExtrinsic): Promise<
         record.pubvote = daoProposal.state.pub_voters.unwrap().toString();
     }
 
+    logger.info(`proposal: ${daoProposal}`)
+
     const data = daoProposal._data.toString();
 
     record.data = data;
 
-    let detail = await fetch(`${IPFS_PIN_URL}/${data}`);
-    let pdata = (await detail.json()) as ProposalData;
-    // let proj = await json;
+    if (data !== "") {
+        let detail = await fetch(`${IPFS_PIN_URL}/${data}`);
+        let pdata = (await detail.json()) as ProposalData;
+        // let proj = await json;
+    
+    
+        logger.info(`details: ${pdata._title}\n${pdata._description}\n${pdata._options}`);
+    }
 
 
-    logger.info(`details: ${pdata._title}\n${pdata._description}\n${pdata._options}`);
 
     // fetch(`${IPFS_PIN_URL}/${data}`).then(res => {
     //     if (res.status >= 400) {
