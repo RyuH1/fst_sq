@@ -36,7 +36,7 @@ type Proposal @entity {
 
   description: String
 
-  options: [String]!
+  options: [String]
 }
 
 enum Privacy {
@@ -74,7 +74,7 @@ type Project @entity {
   data: String!
 
   updated: Int!
-  
+
   prop_count: Int!
 
   workspaces: [Workspace]!
