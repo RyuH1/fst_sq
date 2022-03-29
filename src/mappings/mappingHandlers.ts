@@ -1,7 +1,8 @@
 import {SubstrateExtrinsic} from "@subql/types";
-import {Proposal, Project, CrossChainAccount, Protocol, Privacy, ProposalStatus, VotingFormat} from "../types";
-import { ProjectId, ProposalId, DAOProposal, Project as DAOProject, CrossChainAccount as DAOCrossChainAccount, VoteUpdate } from "../interfaces/daoPortal/types"
+import {Proposal, Project, CrossChainAccount, Protocol, Privacy, ProposalStatus, VotingFormat, Workspace, Strategy, SolidityStrategy, SubstrateStrategy} from "../types";
+import { ProjectId, ProposalId, DAOProposal, Project as DAOProject, CrossChainAccount as DAOCrossChainAccount, VoteUpdate, Workspace as DAOWorkspace } from "../interfaces/daoPortal/types"
 import fetch from "cross-fetch";
+import type { Vec } from '@polkadot/types';
 
 const IPFS_PIN_URL = "https://anydao.mypinata.cloud/ipfs";
 
@@ -10,6 +11,13 @@ type ProposalData = {
     _description: string
     _options: string[]
   }
+
+type ProjectData = {
+    name: string
+    description: string
+    icon: string
+    banner: string
+}
 
 async function ensureCrossChainAccount(account: DAOCrossChainAccount): Promise<void> {
     const record = await CrossChainAccount.get(account.inner.toString());
@@ -20,6 +28,29 @@ async function ensureCrossChainAccount(account: DAOCrossChainAccount): Promise<v
 
         await record.save();
     }
+}
+
+async function updateProposalIpfs(record: Proposal): Promise<Proposal> {
+    if (record.data !== "") {
+        fetch(`${IPFS_PIN_URL}/${record.data}`)
+            .then(async (response) => {
+                try {
+                    let pdata = (await response.json()) as ProposalData;
+
+                    logger.info(`details: ${pdata._title}\n${pdata._description}\n${pdata._options}`);
+
+                    record.title = pdata._title;
+                    record.description = pdata._description;
+                    record.options = pdata._options;
+                } catch (e) {
+                    throw e
+                }
+            })
+            .catch((e) => {
+                return Promise.reject(e)
+            })
+    }
+    return record;
 }
 
 export async function handleAddProposal(extrinsic: SubstrateExtrinsic): Promise<void> {
@@ -73,33 +104,82 @@ export async function handleAddProposal(extrinsic: SubstrateExtrinsic): Promise<
 
     record.data = data;
 
-    if (data !== "") {
-        let detail = await fetch(`${IPFS_PIN_URL}/${data}`);
-        let pdata = (await detail.json()) as ProposalData;
-        // let proj = await json;
-    
-    
-        logger.info(`details: ${pdata._title}\n${pdata._description}\n${pdata._options}`);
-    }
-
-
-
-    // fetch(`${IPFS_PIN_URL}/${data}`).then(res => {
-    //     if (res.status >= 400) {
-    //       throw new Error("Bad response from server");
-    //     }
-    //     return res.json();
-    //   }).then((res: ProposalData) => {
-    //     logger.info(`res: ${res}`);
-    //   })
-    //   .catch(err => {
-    //     logger.err(err);
-    //   });
+    await updateProposalIpfs(record).then(async (response) => {
+        record = response;
+    }).catch((e) => {
+        logger.error(`updateProposalIpfs error: ${e}`);
+    })
 
     record.created = extrinsic.block.block.header.number.toNumber();
     record.updated = extrinsic.block.block.header.number.toNumber();
 
     await record.save();
+
+    // update project
+    const proj_record = await Project.get(`${projectId}`);
+    proj_record.prop_count++;
+    await proj_record.save();
+}
+
+async function populateWorkspace(workspaces: Vec<DAOWorkspace>, projectId: ProjectId): Promise<string[]>  {
+    let workspaceIds = [];
+
+    for (let i = 0; i < workspaces.length; i++) {
+        const workspace = workspaces.at(i);
+        let ws_record = new Workspace(`${projectId}-${i}`);
+        ws_record.chain = workspace._chain.toNumber();
+        let strategies = [];
+        for (let j = 0; j < workspace.strategies.length; j++) {
+            const strategy = workspace.strategies.at(j);
+            let stg_record = new Strategy(`${projectId}-${i}-${j}`);
+            stg_record.protocol = strategy.type as Protocol;
+            if (stg_record.protocol == Protocol.Solidity) {
+                stg_record.solidity = strategy.asSolidity.type as SolidityStrategy;
+                if (!strategy.asSolidity.inner.isEmpty) {
+                    stg_record.param = strategy.asSolidity.inner.toHex();
+                }
+            } else if (stg_record.protocol == Protocol.Substrate) {
+                stg_record.substrate = strategy.asSolidity.type as SubstrateStrategy;
+                if (!strategy.asSubstrate.inner.isEmpty) {
+                    stg_record.param = strategy.asSubstrate.inner.toHex();
+                }
+            } else {
+                // Shouldn't happen
+            }
+            await stg_record.save();
+            strategies.push(stg_record.id);
+        }
+        ws_record.strategiesId = strategies;
+        
+        await ws_record.save();
+        workspaceIds.push(ws_record.id);
+    }
+
+    return workspaceIds;
+}
+
+async function updateProjectIpfs(record: Project): Promise<Project> {
+    if (record.data !== "") {
+        fetch(`${IPFS_PIN_URL}/${record.data}`)
+            .then(async (response) => {
+                try {
+                    let pdata = (await response.json()) as ProjectData;
+
+                    logger.info(`details: ${pdata.name}\n${pdata.description}\n${pdata.icon}\n${pdata.banner}`);
+
+                    record.name = pdata.name;
+                    record.description = pdata.description;
+                    record.icon = pdata.icon;
+                    record.banner = pdata.banner;
+                } catch (e) {
+                    throw e
+                }
+            })
+            .catch((e) => {
+                return Promise.reject(e)
+            })
+    }
+    return record;
 }
 
 export async function handleAddProject(extrinsic: SubstrateExtrinsic): Promise<void> {
@@ -116,8 +196,18 @@ export async function handleAddProject(extrinsic: SubstrateExtrinsic): Promise<v
     
     await ensureCrossChainAccount(daoProject.owner);
     record.ownerId = daoProject.owner.inner.toString();
-    record.data = daoProject.data.toString();
+    const data = daoProject.data.toString();
+    record.data = data;
     record.updated = extrinsic.block.block.header.number.toNumber();
+    record.prop_count = 0;
+
+    record.workspacesId = await populateWorkspace(daoProject.workspaces, projectId);
+
+    await updateProjectIpfs(record).then(async (response) => {
+        record = response;
+    }).catch((e) => {
+        logger.error(`updateProjectIpfs error: ${e}`);
+    })
 
     await record.save();
 }
@@ -126,7 +216,7 @@ export async function handleUpdateProject(extrinsic: SubstrateExtrinsic): Promis
     const {extrinsic: {method: {args: [project_id, project]}}} = extrinsic;
     
     const projectId = project_id as ProjectId;
-    const record = await Project.get(`${projectId}`);
+    let record = await Project.get(`${projectId}`);
     
     const daoProject = project as DAOProject;
 
@@ -134,8 +224,26 @@ export async function handleUpdateProject(extrinsic: SubstrateExtrinsic): Promis
     
     await ensureCrossChainAccount(daoProject.owner);
     record.ownerId = daoProject.owner.inner.toString();
-    record.data = daoProject.data.toString();
+    const data = daoProject.data.toString();
+    record.data = data;
     record.updated = extrinsic.block.block.header.number.toNumber();
+
+    for (let i = 0; i < record.workspacesId.length; i++) {
+        const wid = record.workspacesId.at(i);
+        const ws_record = await Workspace.get(`${wid}`);
+        for (let j = 0; j < ws_record.strategiesId.length; j++) {
+            const sid = ws_record.strategiesId.at(j);
+            await Strategy.remove(`${sid}`);
+        }
+        await Workspace.remove(`${wid}`);
+    }
+    record.workspacesId = await populateWorkspace(daoProject.workspaces, projectId);
+
+    await updateProjectIpfs(record).then(async (response) => {
+        record = response;
+    }).catch((e) => {
+        logger.error(`updateProjectIpfs error: ${e}`);
+    })
 
     await record.save();
 }
