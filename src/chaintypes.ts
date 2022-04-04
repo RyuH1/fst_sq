@@ -29,10 +29,7 @@ const definitions: OverrideBundleDefinition = {
         ProjectId: 'u32',
         ChainIndex: 'u32',
         Protocol: {
-          _enum: [
-            'Solidity',
-            'Substrate'
-          ]
+          _enum: ['Solidity', 'Substrate']
         },
         Chain: {
           _protocol: 'Protocol'
@@ -50,9 +47,7 @@ const definitions: OverrideBundleDefinition = {
           }
         },
         SubstrateStrategy: {
-          _enum: [
-            'NativeBalance'
-          ]
+          _enum: ['NativeBalance']
         },
         Strategy: {
           _enum: {
@@ -64,38 +59,38 @@ const definitions: OverrideBundleDefinition = {
           _chain: 'ChainIndex',
           strategies: 'Vec<Strategy>'
         },
+        UserGroup: {
+          owner: "CrossChainAccount",
+          admins: "Vec<CrossChainAccount>",
+          maintainers: "Vec<CrossChainAccount>",
+          proposers: "Option<Vec<CrossChainAccount>>"
+        },
         Project: {
-          owner: 'CrossChainAccount',
+          usergroup: "UserGroup",
           data: 'IpfsHash',
           workspaces: 'Vec<Workspace>'
         },
         VotingFormat: {
-          _enum: [
-            'SingleChoice'
-          ]
+          _enum: ['SingleChoice', 'SplitVote']
         },
         OptionIndex: 'u8',
         PrivacyLevel: {
-          _enum: [
-            'Opaque',
-            'Private',
-            'Public',
-            'Mixed'
-          ]
+          _enum: {
+            Opaque: 'u8', 
+            Rank: 'Null',
+            Private: 'Null', 
+            Public: 'Null', 
+            Mixed: 'Null'
+          }
         },
         VotingPower: 'U256',
-        DAOProposalStatus: {
-          _enum: [
-            'Pending',
-            'Ongoing',
-            'Closed'
-          ]
-        },
         DAOProposalState: {
-          status: 'DAOProposalStatus',
-          votes: 'Vec<VotingPower>',
-          pub_voters: 'Option<IpfsHash>',
-          updates: 'u32'
+          finalized: "bool",
+          snapshots: "Vec<U256>",
+          blacklisted: "bool",
+          votes: "Vec<VotingPower>",
+          pub_voters: "Option<IpfsHash>",
+          updates: "u32"
         },
         DAOProposal: {
           _author: 'CrossChainAccount',

@@ -8,12 +8,11 @@ schema:
 network:
   endpoint: wss://fs-api.ata.network
   genesisHash: '0x19757b969097d71a154bb26493078f179a8dec1dd9c75bd9d4586d38c659064e'
-  dictionary: https://api.subquery.network/sq/RyuH1/finitestate_dictionary__Unl1S
   chaintypes:
     file: ./dist/chaintypes.js
 dataSources:
   - kind: substrate/Runtime
-    startBlock: 2230291
+    startBlock: 2602004
     mapping:
       file: './dist/index.js'
       handlers:

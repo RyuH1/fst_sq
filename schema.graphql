@@ -77,7 +77,9 @@ type Project @entity {
 
   prop_count: Int!
 
-  workspaces: [Workspace]!
+  proposals: [Proposal] @derivedFrom(field: "project")
+
+  workspaces: [Workspace] @derivedFrom(field: "project")
 
   name: String
 
@@ -98,6 +100,7 @@ enum SubstrateStrategy {
 
 type Strategy @entity {
   id: ID!
+  workspace: Workspace! @index(unique: false)
   protocol: Protocol!
   solidity: SolidityStrategy
   substrate: SubstrateStrategy
@@ -106,6 +109,7 @@ type Strategy @entity {
 
 type Workspace @entity {
   id: ID!
+  project: Project! @index(unique: false)
   chain: Int!
-  strategies: [Strategy]!
+  strategies: [Strategy] @derivedFrom(field: "workspace")
 }

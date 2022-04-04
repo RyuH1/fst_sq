@@ -1,7 +1,7 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
-import type { Enum, Option, Struct, Text, U256, Vec, u32, u64, u8 } from '@polkadot/types';
+import type { Enum, Option, Struct, Text, U256, Vec, bool, u32, u64, u8 } from '@polkadot/types-codec';
 import type { AccountId, H160 } from '@polkadot/types/interfaces/runtime';
 
 /** @name Chain */
@@ -36,18 +36,12 @@ export interface DAOProposal extends Struct {
 
 /** @name DAOProposalState */
 export interface DAOProposalState extends Struct {
-  readonly status: DAOProposalStatus;
+  readonly finalized: bool;
+  readonly snapshots: Vec<U256>;
+  readonly blacklisted: bool;
   readonly votes: Vec<VotingPower>;
   readonly pub_voters: Option<IpfsHash>;
   readonly updates: u32;
-}
-
-/** @name DAOProposalStatus */
-export interface DAOProposalStatus extends Enum {
-  readonly isPending: boolean;
-  readonly isOngoing: boolean;
-  readonly isClosed: boolean;
-  readonly type: 'Pending' | 'Ongoing' | 'Closed';
 }
 
 /** @name IpfsHash */
@@ -59,15 +53,17 @@ export interface OptionIndex extends u8 {}
 /** @name PrivacyLevel */
 export interface PrivacyLevel extends Enum {
   readonly isOpaque: boolean;
+  readonly asOpaque: u8;
+  readonly isRank: boolean;
   readonly isPrivate: boolean;
   readonly isPublic: boolean;
   readonly isMixed: boolean;
-  readonly type: 'Opaque' | 'Private' | 'Public' | 'Mixed';
+  readonly type: 'Opaque' | 'Rank' | 'Private' | 'Public' | 'Mixed';
 }
 
 /** @name Project */
 export interface Project extends Struct {
-  readonly owner: CrossChainAccount;
+  readonly usergroup: UserGroup;
   readonly data: IpfsHash;
   readonly workspaces: Vec<Workspace>;
 }
@@ -107,6 +103,14 @@ export interface SubstrateStrategy extends Enum {
   readonly type: 'NativeBalance';
 }
 
+/** @name UserGroup */
+export interface UserGroup extends Struct {
+  readonly owner: CrossChainAccount;
+  readonly admins: Vec<CrossChainAccount>;
+  readonly maintainers: Vec<CrossChainAccount>;
+  readonly proposers: Option<Vec<CrossChainAccount>>;
+}
+
 /** @name VoteUpdate */
 export interface VoteUpdate extends Struct {
   readonly project: ProjectId;
@@ -118,7 +122,8 @@ export interface VoteUpdate extends Struct {
 /** @name VotingFormat */
 export interface VotingFormat extends Enum {
   readonly isSingleChoice: boolean;
-  readonly type: 'SingleChoice';
+  readonly isSplitVote: boolean;
+  readonly type: 'SingleChoice' | 'SplitVote';
 }
 
 /** @name VotingPower */
@@ -130,4 +135,4 @@ export interface Workspace extends Struct {
   readonly strategies: Vec<Strategy>;
 }
 
-export type PHANTOM_DAOPORTAL = 'daoPortal';
+export type PHANTOM_DAOPORTAL = 'daoportal';

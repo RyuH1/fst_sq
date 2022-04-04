@@ -1,6 +1,6 @@
 import {SubstrateExtrinsic} from "@subql/types";
 import {Proposal, Project, CrossChainAccount, Protocol, Privacy, ProposalStatus, VotingFormat, Workspace, Strategy, SolidityStrategy, SubstrateStrategy} from "../types";
-import { ProjectId, ProposalId, DAOProposal, Project as DAOProject, CrossChainAccount as DAOCrossChainAccount, VoteUpdate, Workspace as DAOWorkspace } from "../interfaces/daoPortal/types"
+import { ProjectId, ProposalId, DAOProposal, Project as DAOProject, CrossChainAccount as DAOCrossChainAccount, VoteUpdate, Workspace as DAOWorkspace, Strategy as DAOStrategy } from "../interfaces/daoPortal/types"
 import fetch from "cross-fetch";
 import type { Vec } from '@polkadot/types';
 
@@ -86,7 +86,7 @@ export async function handleAddProposal(extrinsic: SubstrateExtrinsic): Promise<
         record.frequency = daoProposal._frequency.unwrap().toBigInt();
     }
 
-    record.status = daoProposal.state.status.type as ProposalStatus;
+    // record.status = daoProposal.state.status.type as ProposalStatus;
 
     record.votes = [];
 
@@ -121,41 +121,50 @@ export async function handleAddProposal(extrinsic: SubstrateExtrinsic): Promise<
     await proj_record.save();
 }
 
-async function populateWorkspace(workspaces: Vec<DAOWorkspace>, projectId: ProjectId): Promise<string[]>  {
-    let workspaceIds = [];
+async function populateStrategy(strategies: Vec<DAOStrategy>, workspaceId: string): Promise<void> {
+    for (let i = 0; i < strategies.length; i++) {
+        const strategy = strategies.at(i);
+
+        let stg_record = new Strategy(`${workspaceId}-${i}`);
+        stg_record.workspaceId = workspaceId;
+        stg_record.protocol = strategy.type as Protocol;
+
+        if (strategy.isSolidity) {
+            stg_record.solidity = strategy.asSolidity.type as SolidityStrategy;
+        } else if (strategy.isSubstrate) {
+            stg_record.substrate = strategy.asSubstrate.type as SubstrateStrategy;
+        } else {
+            // shouldn't happen
+        }
+
+        if (!strategy.isEmpty) {
+            stg_record.param = strategy.toHex();
+        }
+        
+        await stg_record.save();
+    }
+}
+
+async function populateWorkspace(workspaces: Vec<DAOWorkspace>, projectId: ProjectId): Promise<void>  {
+
 
     for (let i = 0; i < workspaces.length; i++) {
         const workspace = workspaces.at(i);
-        let ws_record = new Workspace(`${projectId}-${i}`);
-        ws_record.chain = workspace._chain.toNumber();
-        let strategies = [];
-        for (let j = 0; j < workspace.strategies.length; j++) {
-            const strategy = workspace.strategies.at(j);
-            let stg_record = new Strategy(`${projectId}-${i}-${j}`);
-            stg_record.protocol = strategy.type as Protocol;
-            if (stg_record.protocol == Protocol.Solidity) {
-                stg_record.solidity = strategy.asSolidity.type as SolidityStrategy;
-                if (!strategy.asSolidity.inner.isEmpty) {
-                    stg_record.param = strategy.asSolidity.inner.toHex();
-                }
-            } else if (stg_record.protocol == Protocol.Substrate) {
-                stg_record.substrate = strategy.asSolidity.type as SubstrateStrategy;
-                if (!strategy.asSubstrate.inner.isEmpty) {
-                    stg_record.param = strategy.asSubstrate.inner.toHex();
-                }
-            } else {
-                // Shouldn't happen
-            }
-            await stg_record.save();
-            strategies.push(stg_record.id);
-        }
-        ws_record.strategiesId = strategies;
-        
+        const chainId = workspace._chain.toNumber();
+        const wid = `${projectId}-${chainId}`;
+        let ws_record = new Workspace(wid);
+        ws_record.projectId = projectId.toString();
+        ws_record.chain = chainId;
+
         await ws_record.save();
-        workspaceIds.push(ws_record.id);
+
+        await populateStrategy(workspace.strategies, wid)
+        
+        
+
     }
 
-    return workspaceIds;
+
 }
 
 async function updateProjectIpfs(record: Project): Promise<Project> {
@@ -194,14 +203,12 @@ export async function handleAddProject(extrinsic: SubstrateExtrinsic): Promise<v
 
     logger.info(`(${extrinsic.block.block.header.number.toNumber()}) Create Project (id: ${projectId}):\n ${daoProject}`);
     
-    await ensureCrossChainAccount(daoProject.owner);
-    record.ownerId = daoProject.owner.inner.toString();
+    await ensureCrossChainAccount(daoProject.usergroup.owner);
+    record.ownerId = daoProject.usergroup.owner.inner.toString();
     const data = daoProject.data.toString();
     record.data = data;
     record.updated = extrinsic.block.block.header.number.toNumber();
     record.prop_count = 0;
-
-    record.workspacesId = await populateWorkspace(daoProject.workspaces, projectId);
 
     await updateProjectIpfs(record).then(async (response) => {
         record = response;
@@ -210,6 +217,8 @@ export async function handleAddProject(extrinsic: SubstrateExtrinsic): Promise<v
     })
 
     await record.save();
+
+    await populateWorkspace(daoProject.workspaces, projectId);
 }
 
 export async function handleUpdateProject(extrinsic: SubstrateExtrinsic): Promise<void> {
@@ -222,22 +231,11 @@ export async function handleUpdateProject(extrinsic: SubstrateExtrinsic): Promis
 
     logger.info(`(${extrinsic.block.block.header.number.toNumber()}) Update Project (id: ${projectId}):\n ${daoProject}`);
     
-    await ensureCrossChainAccount(daoProject.owner);
-    record.ownerId = daoProject.owner.inner.toString();
+    await ensureCrossChainAccount(daoProject.usergroup.owner);
+    record.ownerId = daoProject.usergroup.owner.inner.toString();
     const data = daoProject.data.toString();
     record.data = data;
     record.updated = extrinsic.block.block.header.number.toNumber();
-
-    for (let i = 0; i < record.workspacesId.length; i++) {
-        const wid = record.workspacesId.at(i);
-        const ws_record = await Workspace.get(`${wid}`);
-        for (let j = 0; j < ws_record.strategiesId.length; j++) {
-            const sid = ws_record.strategiesId.at(j);
-            await Strategy.remove(`${sid}`);
-        }
-        await Workspace.remove(`${wid}`);
-    }
-    record.workspacesId = await populateWorkspace(daoProject.workspaces, projectId);
 
     await updateProjectIpfs(record).then(async (response) => {
         record = response;
@@ -246,6 +244,19 @@ export async function handleUpdateProject(extrinsic: SubstrateExtrinsic): Promis
     })
 
     await record.save();
+
+    const ws_records = await Workspace.getByProjectId(projectId.toString());
+    for (let i = 0; i < ws_records.length; i++) {
+        const wid = ws_records.at(i).id;
+        const stg_records = await Strategy.getByWorkspaceId(wid);
+        for (let j = 0; j < stg_records.length; j++) {
+            const sid = stg_records.at(j).id;
+            await Strategy.remove(sid);
+        }
+        await Workspace.remove(wid);
+    }
+
+    await populateWorkspace(daoProject.workspaces, projectId);
 }
 
 export async function handleUpdateVote(extrinsic: SubstrateExtrinsic): Promise<void> {
@@ -269,11 +280,11 @@ export async function handleUpdateVote(extrinsic: SubstrateExtrinsic): Promise<v
 
     const timestamp = extrinsic.block.timestamp;
 
-    if (timestamp.getTime() >= record.end) {
-        record.status = ProposalStatus.Closed;
-    } else {
-        record.status = ProposalStatus.Ongoing;
-    }
+    // if (timestamp.getTime() >= record.end) {
+    //     record.status = ProposalStatus.Closed;
+    // } else {
+    //     record.status = ProposalStatus.Ongoing;
+    // }
 
     record.updated = extrinsic.block.block.header.number.toNumber();
 
