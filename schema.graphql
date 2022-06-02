@@ -1,53 +1,40 @@
 type Proposal @entity {
-
-  id: ID! #id is a required field
-
+  id: ID!
   project: Project! @index(unique: false)
-
   proposal: Int!
-
   start: BigInt! @index(unique: false)
-
   end: BigInt! @index(unique: false)
-
   author: CrossChainAccount!
-
   privacy: Privacy!
-
   format: VotingFormat!
-
   optioncount: Int!
-
   frequency: BigInt
-
-  status: ProposalStatus!
-
+  finalized: Boolean!
   votes: [String]!
-
   pubvote: String
-
-  data: String!
-
+  blacklisted: Boolean
   created: Int!
-
   updated: Int!
+  updates: Int!
+  data: String!
+  title: String
+  description: String
+  options: [String]
+  workspaces: [Workspace]!
+  snapshots: [String]
 }
 
-enum Privacy {
-  Opaque
-  Private
-  Public
-  Mixed
+type Privacy @jsonField {
+  opaque: Int
+  rank: String
+  private: String
+  public: String
+  mixed: String
 }
 
 enum VotingFormat {
   SingleChoice
-}
-
-enum ProposalStatus {
-  Pending
-  Ongoing
-  Closed
+  SplitVote
 }
 
 enum Protocol {
@@ -58,14 +45,51 @@ enum Protocol {
 type CrossChainAccount @entity {
   id: ID!
   protocol: Protocol!
+  projects: [Project]! @derivedFrom(field: "owner")
+}
+
+type AccountProjectAdmin @entity {
+  id: ID!
+  account: CrossChainAccount!
+  project: Project!
+}
+
+type AccountProjectMaintainer @entity {
+  id: ID!
+  account: CrossChainAccount!
+  project: Project!
+}
+
+type AccountProjectProposer @entity {
+  id: ID!
+  account: CrossChainAccount!
+  project: Project!
 }
 
 type Project @entity {
   id: ID!
-
-  owner: CrossChainAccount!
-
-  data: String!
-
+  owner: CrossChainAccount! @index(unique: false)
   updated: Int!
+  prop_count: Int!
+  prop_updated: Int!
+  proposals: [Proposal]! @derivedFrom(field: "project")
+  workspaces: [Workspace]!
+  enable_proposer: Boolean!
+  data: String!
+  name: String
+  description: String
+  icon: String
+  banner: String
+}
+
+type Strategy @jsonField {
+  protocol: String!
+  solidity: String
+  substrate: String
+  param: String
+}
+
+type Workspace @jsonField {
+  chain: Int
+  strategies: [Strategy]!
 }
