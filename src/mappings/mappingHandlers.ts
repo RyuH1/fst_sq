@@ -154,6 +154,9 @@ export async function handleAddProposal(extrinsic: SubstrateExtrinsic): Promise<
     /// updated
     record.updated = extrinsic.block.block.header.number.toNumber();
 
+    /// updates
+    record.updates = 0;
+
     /// data
     const data = daoProposal._data.toString();
     record.data = data;
@@ -233,6 +236,8 @@ function populateWorkspace(record: Project, workspaces: Vec<DAOWorkspace>): Proj
 }
 
 async function constructUserGroup(record: Project, usergroup: UserGroup): Promise<Project> {
+    record.enable_proposer = usergroup.proposers.isSome;
+
     return record;
 }
 
@@ -372,9 +377,9 @@ export async function handleUpdateVote(extrinsic: SubstrateExtrinsic): Promise<v
         record.pubvote = vote.pub_voters.unwrapOrDefault().toString();
     }
 
-    const timestamp = extrinsic.block.timestamp;
-
     record.updated = extrinsic.block.block.header.number.toNumber();
+
+    record.updates = record.updates + 1;
 
     await record.save();
 }
@@ -401,7 +406,7 @@ export async function handleUpdateSnapshots(extrinsic: SubstrateExtrinsic): Prom
         }
     }
 
-    const timestamp = extrinsic.block.timestamp;
+    // const timestamp = extrinsic.block.timestamp;
 
     record.updated = extrinsic.block.block.header.number.toNumber();
 
