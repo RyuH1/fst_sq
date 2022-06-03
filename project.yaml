@@ -1,18 +1,18 @@
 specVersion: 0.2.0
-name: contextfree
+name: finitestate
 version: 0.0.4
 description: This SubQuery project can be use as a st...
 repository: https://github.com/RyuH1/subquery
 schema:
   file: ./schema.graphql
 network:
-  endpoint: wss://cf-api.ata.network
-  genesisHash: '0x6254c948b5eb7199a112cb308be3385c39c8c942625540ac749c77fe2aebc299'
+  endpoint: wss://fs-api.ata.network
+  genesisHash: '0x19757b969097d71a154bb26493078f179a8dec1dd9c75bd9d4586d38c659064e'
   chaintypes:
     file: ./dist/chaintypes.js
 dataSources:
   - kind: substrate/Runtime
-    startBlock: 2614672
+    startBlock: 1
     mapping:
       file: './dist/index.js'
       handlers:
