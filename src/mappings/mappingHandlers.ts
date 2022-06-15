@@ -385,6 +385,10 @@ export async function handleUpdateVote(extrinsic: SubstrateExtrinsic): Promise<v
 
     record.updates = record.updates + 1;
 
+    if (extrinsic.block.timestamp.getTime() >= record.end) {
+        record.finalized = true;
+    }
+
     await record.save();
 }
 
