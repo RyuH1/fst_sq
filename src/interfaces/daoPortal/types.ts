@@ -1,7 +1,8 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
-import type { Enum, Option, Struct, Text, U256, Vec, bool, u32, u64, u8 } from '@polkadot/types-codec';
+import type { Bytes, Enum, Option, Struct, Text, U256, Vec, bool, u32, u64, u8 } from '@polkadot/types-codec';
+import type { ITuple } from '@polkadot/types-codec/types';
 import type { AccountId, H160 } from '@polkadot/types/interfaces/runtime';
 
 /** @name Chain */
@@ -31,13 +32,14 @@ export interface DAOProposal extends Struct {
   readonly _start: u64;
   readonly _end: u64;
   readonly _frequency: Option<u64>;
+  readonly _workspaces: Vec<Workspace>;
   readonly state: DAOProposalState;
 }
 
 /** @name DAOProposalState */
 export interface DAOProposalState extends Struct {
   readonly finalized: bool;
-  readonly snapshots: Vec<U256>;
+  readonly snapshots: Vec<Option<U256>>;
   readonly blacklisted: bool;
   readonly votes: Vec<VotingPower>;
   readonly pub_voters: Option<IpfsHash>;
@@ -85,7 +87,9 @@ export interface Protocol extends Enum {
 export interface SolidityStrategy extends Enum {
   readonly isErc20Balance: boolean;
   readonly asErc20Balance: H160;
-  readonly type: 'Erc20Balance';
+  readonly isCustom: boolean;
+  readonly asCustom: ITuple<[IpfsHash, Bytes]>;
+  readonly type: 'Erc20Balance' | 'Custom';
 }
 
 /** @name Strategy */
@@ -100,7 +104,9 @@ export interface Strategy extends Enum {
 /** @name SubstrateStrategy */
 export interface SubstrateStrategy extends Enum {
   readonly isNativeBalance: boolean;
-  readonly type: 'NativeBalance';
+  readonly isCustom: boolean;
+  readonly asCustom: ITuple<[IpfsHash, Bytes]>;
+  readonly type: 'NativeBalance' | 'Custom';
 }
 
 /** @name UserGroup */
