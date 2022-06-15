@@ -201,15 +201,17 @@ function populateStrategy(strategies: Vec<DAOStrategy>): Strategy[] {
 
         if (strategy.isSolidity) {
             j_stg.solidity = strategy.asSolidity.type;
+            if (!strategy.asSolidity.isEmpty) {
+                j_stg.param = strategy.asSolidity.inner.toHex();
+            }
         } else if (strategy.isSubstrate) {
             j_stg.substrate = strategy.asSubstrate.type;
+            if (!strategy.asSubstrate.isEmpty) {
+                j_stg.param = strategy.asSubstrate.inner.toHex();
+            }
         } else {
             // shouldn't happen
         }
-
-        if (!strategy.isEmpty) {
-            j_stg.param = strategy.toHex();
-        }        
 
         ret.push(j_stg)
     }
@@ -237,6 +239,8 @@ function populateWorkspace(record: Project, workspaces: Vec<DAOWorkspace>): Proj
 
 async function constructUserGroup(record: Project, usergroup: UserGroup): Promise<Project> {
     record.enable_proposer = usergroup.proposers.isSome;
+
+    /// TODO: populate the actual usergroup entries 
 
     return record;
 }
