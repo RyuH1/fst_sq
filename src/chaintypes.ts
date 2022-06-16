@@ -128,16 +128,16 @@ const definitions: OverrideBundleDefinition = {
           update_time: 'u64'
         },
         GmetadataKey: {
-          ns: 'u32',
+          ns: 'u64',
           table: 'Vec<u8>',
           pk: 'Vec<u8>'
         },
         GmetadataWriteOp: {
           _enum: {
-            SetValue: 'GmetadataKey',
+            SetValue: '(GmetadataKey, Vec<u8>)',
             RemoveValue: 'GmetadataKey',
-            AddIndex: 'GmetadataKey',
-            RemoveIndex: 'GmetadataKey',
+            AddIndex: '(GmetadataKey, Vec<u8>)',
+            RemoveIndex: '(GmetadataKey, Vec<u8>)'
           }
         }
       }
