@@ -128,7 +128,7 @@ const definitions: OverrideBundleDefinition = {
           update_time: 'u64'
         },
         GmetadataKey: {
-          ns: 'u64',
+          ns: 'u32',
           table: 'Vec<u8>',
           pk: 'Vec<u8>'
         },
