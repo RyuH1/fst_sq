@@ -120,7 +120,7 @@ const definitions: OverrideBundleDefinition = {
           owners: 'Vec<AccountId>'
         },
         GmetadataValueInfo: {
-          data: ' Vec<u8>',
+          data: 'Vec<u8>',
           update_time: 'u64'
         },
         GmetadataIndexInfo: {
@@ -134,10 +134,10 @@ const definitions: OverrideBundleDefinition = {
         },
         GmetadataWriteOp: {
           _enum: {
-            SetValue: '(GmetadataKey, Vec<u8>)',
+            SetValue: 'GmetadataKey',
             RemoveValue: 'GmetadataKey',
-            AddIndex: '(GmetadataKey, Vec<u8>)',
-            RemoveIndex: '(GmetadataKey, Vec<u8>)'
+            AddIndex: 'GmetadataKey',
+            RemoveIndex: 'GmetadataKey',
           }
         }
       }
