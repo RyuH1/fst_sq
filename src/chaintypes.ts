@@ -112,6 +112,37 @@ const definitions: OverrideBundleDefinition = {
           proposal: 'ProposalId',
           votes: 'Vec<VotingPower>',
           pub_voters: 'Option<IpfsHash>'
+        },
+        GmetadataNamespaceName: 'Text',
+        GmetadataNamespaceInfo: {
+          id: 'u32',
+          name: 'Vec<u8>',
+          owners: 'Vec<AccountId>'
+        },
+        GmetadataValueInfo: {
+          data: ' Vec<u8>',
+          update_time: 'u64'
+        },
+        GmetadataIndexInfo: {
+          data: 'Vec<Vec<u8>>',
+          update_time: 'u64'
+        },
+        GmetadataKey: {
+          ns: 'u32',
+          table: 'Vec<u8>',
+          pk: 'Vec<u8>'
+        },
+        GmetadataQueryResult: {
+          list: 'Vec<Vec<u8>>',
+          cursor: 'Vec<u8>'
+        },
+        GmetadataWriteOp: {
+          _enum: {
+            SetValue: '(GmetadataKey, Vec<u8>)',
+            RemoveValue: '(GmetadataKey)',
+            AddIndex: '(GmetadataKey, Vec<u8>)',
+            RemoveIndex: '(GmetadataKey, Vec<u8>)'
+          }
         }
       }
     }
