@@ -129,12 +129,6 @@ const definitions: OverrideBundleDefinition = {
         },
         GmetadataKey: {
           ns: 'u32',
-          table: 'Vec<u8>',
-          pk: 'Vec<u8>'
-        },
-        GmetadataQueryResult: {
-          list: 'Vec<Vec<u8>>',
-          cursor: 'Vec<u8>'
         },
         GmetadataWriteOp: {
           _enum: {
