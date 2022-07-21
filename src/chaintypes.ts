@@ -80,10 +80,10 @@ const definitions: OverrideBundleDefinition = {
         OptionIndex: 'u8',
         PrivacyLevel: {
           _enum: {
-            Opaque: 'u8', 
+            Opaque: 'u8',
             Rank: 'Null',
-            Private: 'Null', 
-            Public: 'Null', 
+            Private: 'Null',
+            Public: 'Null',
             Mixed: 'Null'
           }
         },
@@ -139,10 +139,41 @@ const definitions: OverrideBundleDefinition = {
             AddIndex: '(GmetadataKey, Vec<u8>)',
             RemoveIndex: '(GmetadataKey, Vec<u8>)'
           }
-        }
+        },
+        AttestorOf: {
+          id: "Vec<u8>",
+          pubkey: "Vec<u8>",
+          application: "BTreeSet<AccountId>"
+        },
+        GeodeOf: {
+          id: "AccountId",
+          provider: "AccountId",
+          ip: "Vec<u8>",
+          domain: "Vec<u8>",
+          props: "BTreeMap<Vec<u8>, Vec<u8>>",
+          healthy_state: "HealthyState",
+          working_state: "WorkingState<BlockNumber>",
+          order_id: "Option<Hash>"
+        },
+        WorkingState: {
+          _enum: {
+            Idle: "()",
+            Pending: "BlockNumber",
+            Working: "BlockNumber",
+            Finalizing: "BlockNumber",
+            Exiting: "()",
+            Exited: "BlockNumber"
+          }
+        },
+        HealthyState: {
+          _enum: {
+            Unhealthy: "()",
+            Healthy: "()"
+          }
+        },
       }
     }
   ]
 };
 
-export default { typesBundle: { spec: { finitestate: definitions }}};
+export default { typesBundle: { spec: { finitestate: definitions } } };
