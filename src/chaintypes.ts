@@ -9,6 +9,10 @@ const definitions: OverrideBundleDefinition = {
       // on all versions
       minmax: [0, undefined],
       types: {
+        DispatchErrorModule: {
+          index: "u8",
+          error: "u8"
+        },
         ResourceId: '[u8; 32]',
         DepositNonce: 'u64',
         ProposalStatus: {
