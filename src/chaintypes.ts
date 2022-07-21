@@ -25,6 +25,15 @@ const definitions: OverrideBundleDefinition = {
         },
         BridgeTokenId: 'U256',
         BridgeChainId: 'u8',
+        VestingPlan: {
+          start_time: 'u64',
+          cliff_duration: 'u64',
+          total_duration: 'u64',
+          interval: 'u64',
+          initial_amount: 'Balance',
+          total_amount: 'Balance',
+          vesting_during_cliff: 'bool'
+        },
         ProposalId: 'u32',
         ProjectId: 'u32',
         ChainIndex: 'u32',
