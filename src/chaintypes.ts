@@ -184,6 +184,29 @@ const definitions: OverrideBundleDefinition = {
             Healthy: "()"
           }
         },
+        OrderOf: {
+          order_id: "Hash",
+          binary: "Vec<u8>",
+          encrypted: "bool",
+          domain: "Vec<u8>",
+          name: "Vec<u8>",
+          price: "U256",
+          start_session_id: "u32",
+          duration: "u32",
+          geode_num: "u32",
+          state: "OrderState",
+          refund_unit: "u32",
+          service_owner: "[u8; 32]"
+        },
+        OrderState: {
+          _enum: {
+            Submitted: "()",
+            Pending: "()",
+            Processing: "()",
+            Emergency: "()",
+            Done: "()"
+          }
+        },
       }
     }
   ]
